@@ -50,9 +50,15 @@ class Daytime(int):
         
             
 def DaytimeFromStr(s):
+    # HH:MM
     m = time_rexp.match(s)
     if m:
         return Daytime(60 * int(m.group(1)) + int(m.group(2)))
+        
+    # nur ein Wert => Stunde
+    if s.isdigit():
+        return Daytime(60 * int(s))
+
         
 def DaytimeNow():
     now = datetime.datetime.now()
@@ -556,6 +562,8 @@ class MyFrame(wx.Frame):
         self.AddToolItem(toolbar, "delday",   self.OnDelDay,   tooltip="Alle Tageseinträge löschen")
         self.AddToolItem(toolbar, "sum",      self.OnSum,      tooltip="Ergebnis anzeigen")
         self.AddToolItem(toolbar, "settings", self.OnSettings, tooltip="Einstellungen")
+        self.AddToolItem(toolbar, "export",   self.OnExport,   tooltip="Export aller Daten")
+        self.AddToolItem(toolbar, "import",   self.OnImport,   tooltip="Import aller Daten")
         toolbar.Realize()
 
     def AddToolItem(self, toolbar, bmp_name, handler, tooltip=""):
@@ -681,6 +689,99 @@ class MyFrame(wx.Frame):
 
         dlg.Destroy()
         
+    def OnExport(self, event):
+        # filename
+        filename = wx.FileSelector(
+            "Exportfile wählen", 
+            default_filename="psptimer.dat")
+        if not filename:
+            return
+            
+        # lines
+        lines = []
+        cur_day = config.GetDay()
+        for day in config.ReadDays():
+            config.SetDay(day)
+            for daytime in config.ReadDaytimes():
+                val  = config.ReadTimeval(daytime)
+                line = "%s;%s;%s;%s" % (str(day), str(daytime), val.job, val.psp)
+                lines.append(line)
+        config.SetDay(cur_day)
+        
+        # write
+        file(filename, 'w').write('\n'.join(lines))
+        
+    def OnImport(self, event):
+        # filename
+        filename = wx.FileSelector(
+            "Exportfile wählen", 
+            default_filename="psptimer.dat")
+        if not filename:
+            return
+        
+        # Daten einlesen
+        import_data = {}  # day -> Daytime -> Config.Timeval
+        for row, line in enumerate(file(filename, 'r').readlines()):
+            except_text = "%i: %s" % (row, line.strip())
+            
+            # items
+            items = line.split(';')
+            if len(items) != 4:
+                raise Exception(except_text)
+                
+            # day
+            day = datetime.datetime.strptime(items[0].strip(), "%Y-%m-%d") 
+            
+            # daytime
+            daytime = DaytimeFromStr(items[1].strip())
+            if not daytime:
+                raise Exception(except_text)
+                
+            # timeval
+            job = items[2].strip()
+            psp = items[3].strip()
+            timeval = Config.Timeval(job, psp)
+            
+            # import_data
+            if day not in import_data:
+                import_data[day] = {}
+            import_day = import_data[day]
+            import_day[daytime] = timeval
+            
+        if len(import_data) == 0:
+            raise Exception('Importdaten sind leer')
+        
+        # Sicherheitsdialog
+        answer = wx.MessageBox(
+            "Sollen existierende Daten wirklich ersetzt werden?", 
+            "Daten ersetzen",
+            wx.YES_NO | wx.CANCEL, self)
+        if answer != wx.YES:
+            return
+        
+        # Altdaten löschen
+        config.SetPath("/")
+        for day in config.ReadDays():
+            config.SetDay(day)
+            config.DeleteGroup(day.strftime("/%y%m%d"))
+            
+        # neue Daten schreiben
+        for day in sorted(import_data.keys()):
+            config.SetDay(day)
+            day_data = import_data[day]
+            for daytime in sorted(day_data.keys()):
+                timeval = day_data[daytime]
+                config.WriteDayitem(daytime, timeval)
+            
+        # Anzeige
+        last_day = sorted(import_data.keys())[-1]
+        config.SetDay(last_day)
+            
+        if self.list.editor.IsShown():
+            self.list.CloseEditor()
+        self.SetTitle()
+        self.list.ShowCurDay()
+            
     def OnEndEdit(self, event):
         ### wird komischerweise 2x aufgerufen (in der wx-2.6.3.3-Version nicht mehr)
         #~ if self.ignore_next_end_edit_event:
