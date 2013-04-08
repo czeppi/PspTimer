@@ -135,6 +135,8 @@ class Config(wx.Config):
     def ReadTimeval(self, daytime):
         self.SetPath(self.cur_day.strftime("/%y%m%d"))
         valstr = self.Read(str(daytime))
+        if isinstance(valstr, unicode):
+            valstr = valstr.encode(encoding='latin-1')
         val    = self.TimevalFromStr(valstr)
         self.SetPath("/")
         return val
@@ -795,6 +797,12 @@ class MyFrame(wx.Frame):
         col      = event.GetColumn()
         new_text = event.GetText()
         old_text = self.list.GetItem(row, col).GetText()
+        
+        if isinstance(new_text, unicode):
+            new_text = new_text.encode(encoding='latin-1')
+            
+        if isinstance(old_text, unicode):
+            old_text = old_text.encode(encoding='latin-1')
         
         #~ if old_text == new_text:
             #~ return
