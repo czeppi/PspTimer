@@ -842,7 +842,7 @@ class MyFrame(wx.Frame):
                     new_menu_item = menu.Append(wx.ID_ANY, str(Daytime(t)))
                     self.Bind(wx.EVT_MENU, self.OnChangeItem, id = new_menu_item.GetId())
             
-            self.PopupMenu(menu, event.GetPosition())
+            self.PopupMenu(menu, event.GetPoint())
         else:
             # hist_list
             hist_list = []
