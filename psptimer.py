@@ -810,7 +810,7 @@ class MyFrame(wx.Frame):
         
     def OnRightClick(self, event):
         # col
-        x = event.GetPosition().x
+        x = event.GetPoint().x
         col = 0
         while x >= self.list.GetColumnWidth(col):
             x -= self.list.GetColumnWidth(col)
@@ -824,14 +824,12 @@ class MyFrame(wx.Frame):
             # menu
             menu = wx.Menu()
             
-            new_id = wx.NewId()
-            menu.Append(new_id, "Zeile löschen")
-            self.Bind(wx.EVT_MENU, self.OnDelItem, id = new_id)
+            new_menu_item = menu.Append(wx.ID_ANY, "Zeile löschen")
+            self.Bind(wx.EVT_MENU, self.OnDelItem, id = new_menu_item.GetId())
             
             if row + 2 < self.list.GetItemCount(): # nicht beim letzten Element
-                new_id = wx.NewId()
-                menu.Append(new_id, "Zeitdauer ändern")
-                self.Bind(wx.EVT_MENU, self.OnChgTimespan, id = new_id)
+                new_menu_item = menu.Append(wx.ID_ANY, "Zeitdauer ändern")
+                self.Bind(wx.EVT_MENU, self.OnChgTimespan, id = new_menu_item.GetId())
             
             t0 = DaytimeFromStr(self.cur_listitem.GetText())
             if t0:
@@ -841,9 +839,8 @@ class MyFrame(wx.Frame):
                 t_stop  = t0 + t0 % 5 + 11
                 
                 for t in range(t_start, t_stop, 5):
-                    new_id = wx.NewId()
-                    menu.Append(new_id, str(Daytime(t)))
-                    self.Bind(wx.EVT_MENU, self.OnChangeItem, id = new_id)
+                    new_menu_item = menu.Append(wx.ID_ANY, str(Daytime(t)))
+                    self.Bind(wx.EVT_MENU, self.OnChangeItem, id = new_menu_item.GetId())
             
             self.PopupMenu(menu, event.GetPosition())
         else:
@@ -872,11 +869,10 @@ class MyFrame(wx.Frame):
             menu = wx.Menu()
             
             for val in hist_list:
-                new_id = wx.NewId()
-                menu.Append(new_id, val)
-                self.Bind(wx.EVT_MENU, self.OnChangeItem, id = new_id)
+                new_menu_item = menu.Append(wx.ID_ANY, val)
+                self.Bind(wx.EVT_MENU, self.OnChangeItem, id = new_menu_item.GetId())
             
-            self.PopupMenu(menu, event.GetPosition())
+            self.PopupMenu(menu, event.GetPoint())
             
             #~ item = wx.GetSingleChoice(
                 #~ "Bitte eine Element auswählen",
@@ -898,7 +894,7 @@ class MyFrame(wx.Frame):
         menuitem = menu.FindItemById(event.GetId())
         if not isinstance(menuitem, wx.MenuItem):
             return
-        new_text = menuitem.GetLabel()
+        new_text = menuitem.GetItemLabelText()
             
         # set new_text
         self.list.ChangeText(row, col, new_text)
