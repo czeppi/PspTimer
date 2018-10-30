@@ -16,7 +16,7 @@ __revision__ = "$Revision: 1.0.0.0 $"[11:-2]
 
 import sys
 import datetime
-import cPickle
+#import cPickle
 import re
 import wx
 import wx.lib.mixins.listctrl  as  listmix
@@ -29,6 +29,7 @@ config_num_cols = 2
 time_rexp = re.compile("^([0-9]{1,2}):?([0-9]{2})$")
 date_rexp = re.compile("^([0-9][0-9])([0-9][0-9])([0-9][0-9])$")
 num_history_entries = 20
+max_int = 2147483647
 
 #---------------------------------------------------------------------------
 
@@ -135,8 +136,6 @@ class Config(wx.Config):
     def ReadTimeval(self, daytime):
         self.SetPath(self.cur_day.strftime("/%y%m%d"))
         valstr = self.Read(str(daytime))
-        if isinstance(valstr, unicode):
-            valstr = valstr.encode(encoding='latin-1')
         val    = self.TimevalFromStr(valstr)
         self.SetPath("/")
         return val
@@ -239,7 +238,7 @@ def SortCallback(item1, item2):
 #---------------------------------------------------------------------------
 class ListDropTarget(wx.PyDropTarget):
     def __init__(self, list_ctrl):
-        wx.PyDropTarget.__init__(self)
+        wx.DropTarget.__init__(self)
         self.list_ctrl = list_ctrl
 
         # specify the type of data we will accept
@@ -318,11 +317,11 @@ class SettingsDlg(wx.Dialog):
         
         # Rest
         vsizer = wx.BoxSizer(wx.VERTICAL)
-        vsizer.AddSpacer((0,5))
+        vsizer.AddSpacer(5)
         vsizer.Add(grid_sizer, 1, wx.EXPAND|wx.LEFT|wx.RIGHT, border = 5)
-        vsizer.AddSpacer((0,5))
+        vsizer.AddSpacer(5)
         vsizer.Add(button_sizer, 0, wx.ALIGN_CENTER|wx.LEFT|wx.RIGHT, border = 5)
-        vsizer.AddSpacer((0,5))
+        vsizer.AddSpacer(5)
 
         self.SetSizer(vsizer)
         self.Fit()
@@ -356,14 +355,14 @@ class MainListCtrl(wx.ListCtrl,
         self.DeleteAllItems()
         for daytime in config.ReadDaytimes():
             val = config.ReadTimeval(daytime)
-            row = self.InsertStringItem(sys.maxint, "")
+            row = self.InsertItem(max_int, "")
             self.SetItemData(row, daytime)
-            self.SetStringItem(row, 0, str(daytime))
-            self.SetStringItem(row, 1, val.job)
-            self.SetStringItem(row, 2, val.psp)
+            self.SetItem(row, 0, str(daytime))
+            self.SetItem(row, 1, val.job)
+            self.SetItem(row, 2, val.psp)
         
-        row = self.InsertStringItem(sys.maxint, "")
-        self.SetItemData(row, sys.maxint)  # leeres Item hinten anhängen
+        row = self.InsertItem(max_int, "")
+        self.SetItemData(row, max_int)  # leeres Item hinten anhängen
         self.SortItems(SortCallback)
         
         for row in range(self.GetItemCount()):
@@ -498,6 +497,9 @@ class MainListCtrl(wx.ListCtrl,
         """ Überschreibt listmix.TextEditMixin.OnChar """
 
         keycode = event.GetKeyCode()
+        print('keycode: {}'.format(keycode))
+        
+        
         if keycode == wx.WXK_TAB and event.ShiftDown():
             self.CloseEditor()
             if self.curCol-1 >= 0:
@@ -569,11 +571,10 @@ class MyFrame(wx.Frame):
         toolbar.Realize()
 
     def AddToolItem(self, toolbar, bmp_name, handler, tooltip=""):
-        new_id = wx.NewId()
         bmp = wx.Bitmap(bmp_name + ".bmp", wx.BITMAP_TYPE_BMP)
-        toolbar.AddSimpleTool(new_id, bmp, tooltip, "")
-        self.Bind(wx.EVT_TOOL, handler, id = new_id)
-        return new_id
+        label = ""
+        new_tool = toolbar.AddTool(wx.ID_ANY, label, bmp, tooltip)
+        self.Bind(wx.EVT_TOOL, handler, id = new_tool.GetId())
         
     def SetTitle(self):
         today   = datetime.date.today()
@@ -711,7 +712,7 @@ class MyFrame(wx.Frame):
         config.SetDay(cur_day)
         
         # write
-        file(filename, 'w').write('\n'.join(lines))
+        open(filename, 'w').write('\n'.join(lines))
         
     def OnImport(self, event):
         # filename
@@ -723,7 +724,7 @@ class MyFrame(wx.Frame):
         
         # Daten einlesen
         import_data = {}  # day -> Daytime -> Config.Timeval
-        for row, line in enumerate(file(filename, 'r').readlines()):
+        for row, line in enumerate(open(filename, 'r').readlines()):
             except_text = "%i: %s" % (row, line.strip())
             
             # items
@@ -797,12 +798,6 @@ class MyFrame(wx.Frame):
         col      = event.GetColumn()
         new_text = event.GetText()
         old_text = self.list.GetItem(row, col).GetText()
-        
-        if isinstance(new_text, unicode):
-            new_text = new_text.encode(encoding='latin-1')
-            
-        if isinstance(old_text, unicode):
-            old_text = old_text.encode(encoding='latin-1')
         
         #~ if old_text == new_text:
             #~ return
@@ -989,8 +984,10 @@ class MyFrame(wx.Frame):
             result = drag_source.DoDragDrop(True)
     
     def OnSize(self, event):
-        w,h = self.GetClientSizeTuple()
-        self.list.SetDimensions(0, 0, w, h)
+        s = self.GetClientSize()
+        w, h = s.width, s.height
+        self.list.SetSize(w, h)
+        #self.list.SetDimensions(0, 0, w, h)
         
     def OnActivate(self, event):
         if event.GetActive():
@@ -1011,7 +1008,7 @@ class App(wx.App):
         return True
 
     def OnExit(self):
-        pass
+        return 0
 
 
 def main():
