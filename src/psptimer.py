@@ -22,13 +22,13 @@ from configuration import Config
 from mainframe import MyFrame
 
 
-app_name = "PSP-Timer"
+APP_NAME = "PSP-Timer"
 ROOT_DPATH = Path(sys.argv[0]).absolute().parent.parent
 ETC_DPATH = ROOT_DPATH / "etc"
 
 
 def main():
-    config = Config(app_name=app_name)
+    config = Config(app_name=APP_NAME)
     app = App()
 
     app.Init(config=config)
@@ -39,9 +39,9 @@ class App(wx.App):
     """Application class."""
 
     def Init(self, config: Config):
-        self.frame = MyFrame(app_name=app_name, etc_dpath=ETC_DPATH, config=config)
-        self.frame.Show()
-        self.SetTopWindow(self.frame)
+        self._frame = MyFrame(app_name=APP_NAME, etc_dpath=ETC_DPATH, config=config)
+        self._frame.Show()
+        self.SetTopWindow(self._frame)
         return True
 
     def OnExit(self):

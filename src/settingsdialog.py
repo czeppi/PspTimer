@@ -2,6 +2,7 @@ import wx
 
 
 class SettingsDlg(wx.Dialog):
+
     def __init__(self, parent, round_min: int):
         title = 'Einstellungen'
         wx.Dialog.__init__(self, parent, -1, title)
@@ -11,9 +12,9 @@ class SettingsDlg(wx.Dialog):
         #~ self.SetFont(font)
 
         # Ctrls
-        ok_button       = wx.Button(self, wx.ID_OK, "OK")
-        cancel_button   = wx.Button(self, wx.ID_CANCEL, "Cancel")
-        self.round_ctrl = wx.TextCtrl(self, -1, str(round_min))
+        ok_button = wx.Button(self, wx.ID_OK, "OK")
+        cancel_button = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        self._round_ctrl = wx.TextCtrl(self, -1, str(round_min))
 
         # grid_sizer
         grid_sizer = wx.FlexGridSizer(0, 2, 0, 5)
@@ -22,7 +23,7 @@ class SettingsDlg(wx.Dialog):
         grid_sizer.Add(
             wx.StaticText(self, -1, "Minuten runden auf:"),
                 0, wx.ALIGN_CENTER_VERTICAL)
-        grid_sizer.Add(self.round_ctrl, 0, wx.EXPAND)
+        grid_sizer.Add(self._round_ctrl, 0, wx.EXPAND)
 
         # button_sizer
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
