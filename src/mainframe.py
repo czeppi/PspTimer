@@ -204,7 +204,7 @@ class MyFrame(wx.Frame):
         if not filename:
             return
 
-        # Daten einlesen
+        # read data
         import_data = {}  # day -> Daytime -> Timeval
         for row, line in enumerate(open(filename, 'r').readlines()):
             except_text = "%i: %s" % (row, line.strip())
@@ -236,7 +236,7 @@ class MyFrame(wx.Frame):
         if len(import_data) == 0:
             raise Exception('Importdaten sind leer')
 
-        # Sicherheitsdialog
+        # dialog for confirm
         answer = wx.MessageBox(
             "Sollen existierende Daten wirklich ersetzt werden?",
             "Daten ersetzen",
@@ -244,13 +244,13 @@ class MyFrame(wx.Frame):
         if answer != wx.YES:
             return
 
-        # Altdaten löschen
+        # remove old data
         self._config.SetPath("/")
         for day in self._config.read_days():
             self._config.set_day(day)
             self._config.DeleteGroup(day.strftime("/%y%m%d"))
 
-        # neue Daten schreiben
+        # write new data
         for day in sorted(import_data.keys()):
             self._config.set_day(day)
             day_data = import_data[day]
@@ -258,7 +258,7 @@ class MyFrame(wx.Frame):
                 timeval = day_data[daytime]
                 self._config.write_day_item(daytime, timeval)
 
-        # Anzeige
+        # show
         last_day = sorted(import_data.keys())[-1]
         self._config.set_day(last_day)
 
@@ -268,12 +268,6 @@ class MyFrame(wx.Frame):
         self._list_ctrl.show_cur_day()
 
     def on_end_edit(self, event):
-        ### wird komischerweise 2x aufgerufen (in der wx-2.6.3.3-Version nicht mehr)
-        #~ if self.ignore_next_end_edit_event:
-            #~ self.ignore_next_end_edit_event = False
-            #~ event.Veto()
-            #~ return
-
         self._ignore_next_end_edit_event = True
 
         row      = event.GetIndex()
@@ -281,13 +275,8 @@ class MyFrame(wx.Frame):
         new_text = event.GetText()
         old_text = self._list_ctrl.GetItem(row, col).GetText()
 
-        #~ if old_text == new_text:
-            #~ return
-
         self._list_ctrl.change_text(row, col, new_text)
 
-        #~ if col == 0 and (old_text or new_text):
-            #~ event.Veto()  # da schon mit SetStringItem gesetzt
         event.Veto()
 
     def on_right_click(self, event):
@@ -302,14 +291,14 @@ class MyFrame(wx.Frame):
         row = event.GetIndex()
         self.cur_listitem = self._list_ctrl.GetItem(row, col)
 
-        if col == 0:  # Zeit
+        if col == 0:  # time
             # menu
             menu = wx.Menu()
 
             new_menu_item = menu.Append(wx.ID_ANY, "Zeile löschen")
             self.Bind(wx.EVT_MENU, self.on_del_item, id = new_menu_item.GetId())
 
-            if row + 2 < self._list_ctrl.GetItemCount(): # nicht beim letzten Element
+            if row + 2 < self._list_ctrl.GetItemCount(): # not at the last item
                 new_menu_item = menu.Append(wx.ID_ANY, "Zeitdauer ändern")
                 self.Bind(wx.EVT_MENU, self.on_chg_timespan, id = new_menu_item.GetId())
 
@@ -356,12 +345,6 @@ class MyFrame(wx.Frame):
 
             self.PopupMenu(menu, event.GetPoint())
 
-            #~ item = wx.GetSingleChoice(
-                #~ "Bitte eine Element auswählen",
-                #~ "Elementauswahl",
-                #~ ["aa", "bb", "cc"],
-                #~ self)
-
     def on_change_item(self, event):
         # row, col
         if not isinstance(self.cur_listitem, wx.ListItem):
@@ -373,10 +356,11 @@ class MyFrame(wx.Frame):
         menu = event.GetEventObject()
         if not isinstance(menu, wx.Menu):
             return
-        menuitem = menu.FindItemById(event.GetId())
-        if not isinstance(menuitem, wx.MenuItem):
+
+        menu_item = menu.FindItemById(event.GetId())
+        if not isinstance(menu_item, wx.MenuItem):
             return
-        new_text = menuitem.GetItemLabelText()
+        new_text = menu_item.GetItemLabelText()
 
         # set new_text
         self._list_ctrl.change_text(row, col, new_text)
@@ -418,17 +402,11 @@ class MyFrame(wx.Frame):
             event.Skip()
             return
 
-        #
-        #~ if (event.ShiftDown() or event.ControlDown()
-        #~ or  event.AltDown()   or event.MetaDown()):
-            #~ event.Skip()
-            #~ return
-
         # sel_item
         sel_item = None
         for row in range(num_items):
             if self._list_ctrl.GetItemState(row, wx.LIST_STATE_SELECTED):
-                if sel_item != None:  # nicht eindeutig?
+                if sel_item != None:  # not unique?
                     event.Skip()
                     return
                 sel_item = row

@@ -30,7 +30,7 @@ class SettingsDlg(wx.Dialog):
         button_sizer.Add(ok_button, 0, wx.ALIGN_CENTER)
         button_sizer.Add(cancel_button, 0, wx.ALIGN_CENTER)
 
-        # Rest
+        # vsizer
         vsizer = wx.BoxSizer(wx.VERTICAL)
         vsizer.AddSpacer(5)
         vsizer.Add(grid_sizer, 1, wx.EXPAND|wx.LEFT|wx.RIGHT, border = 5)

@@ -15,7 +15,7 @@ class Daytime(int):
         if m:
             return Daytime(60 * int(m.group(1)) + int(m.group(2)))
 
-        # nur ein Wert => Stunde
+        # only one value => hours
         if s.isdigit():
             return Daytime(60 * int(s))
 

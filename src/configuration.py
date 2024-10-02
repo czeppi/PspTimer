@@ -25,7 +25,7 @@ class Config(wx.Config):
     def read_days(self):
         self.SetPath("/")
 
-        day_list = []  # Liste von datetime.date
+        day_list = []  # list of datetime.date
         ok, group, ind = self.GetFirstGroup()
         while ok:
             m = DATE_REX.match(group)
@@ -68,7 +68,7 @@ class Config(wx.Config):
         return Timeval(job, psp)
 
     def read_day_items(self):
-        day_items = {}  # Minuten -> Liste von Werten
+        day_items = {}  # minutes -> list of values
         for daytime in self.read_day_times():
             timeval = self.read_timeval(daytime)
             day_items[daytime] = timeval
@@ -107,14 +107,14 @@ class Config(wx.Config):
             val     = Timeval("", "")
         val.job = job
 
-        # val.psp aus anderen Einträgen suchen (gleicher Tag)
+        # search val.psp in other items of the same day
         psp_set = set()
         for t in self.read_day_times():
             v = self.read_timeval(t)
             if v.job == job and v.psp:
                 psp_set.add(v.psp)
 
-        # nix gefunden -> val.psp aus anderen Einträgen suchen (alle Tage)
+        # found nothing -> search val.psp in other items of all days
         if len(psp_set) == 0:
             cur_day = self.get_day()
             for day in reversed(self.read_days()):
@@ -123,14 +123,14 @@ class Config(wx.Config):
                     v = self.read_timeval(t)
                     if v.job == job and v.psp:
                         psp_set.add(v.psp)
-                if len(psp_set) > 0: # Eintrag gefunden (aber immer ganzen Tag einlesen)
+                if len(psp_set) > 0:  # found item (but read allways the whole day)
                     break
             self.set_day(cur_day)
 
-        if len(psp_set) == 1:  # Werte eindeutig?
+        if len(psp_set) == 1:  # are values unique?
             val.psp = psp_set.pop()
 
-        # Write
+        # write
         return self.write_day_item(daytime, val)
 
     def write_psp(self, psp, daytime = None):

@@ -46,7 +46,7 @@ class MainListCtrl(wx.ListCtrl,
             self.SetItem(row, 2, val.psp)
 
         row = self.InsertItem(MAX_INT, "")
-        self.SetItemData(row, MAX_INT)  # leeres Item hinten anhängen
+        self.SetItemData(row, MAX_INT)  # append an empty item
         self.SortItems(lambda item1, item2: item1 - item2)
 
         for row in range(self.GetItemCount()):
@@ -68,24 +68,24 @@ class MainListCtrl(wx.ListCtrl,
         if old_text == new_text:
             return
 
-        if col == 0:  # Zeit
+        if col == 0:  # time
             new_time = Daytime.create_from_str(new_text)
             old_time = Daytime.create_from_str(old_text)
             sel_times = [new_time]
 
-            if new_time:   # item ändern (oder neu)
-                if old_time:  # ändern
+            if new_time:   # change item (or new)
+                if old_time:  # change
                     if self._config.rename_daytime(old_time, new_time):
                         changed = True
-                else:         # neu
+                else:  # new
                     if self._config.write_day_item(new_time, Timeval('', '')):
                         changed = True
 
-            elif old_time:    # item löschen
+            elif old_time:  # remove item
                 if self._config.DeleteDayitem(old_time):
                     changed = True
 
-        else:  # nicht Zeit
+        else:  # not time
             daytime = Daytime.create_from_str(self.GetItemText(row))
             if daytime or new_text:
                 if col == 1:
@@ -120,7 +120,7 @@ class MainListCtrl(wx.ListCtrl,
         from_len = sorted_times[from_index+1] - from_time
         to_len   = sorted_times[to_index+1]   - to_time
 
-        # Write Config
+        # write config
         if from_index < to_index:  # nach hinten schieben
             for i in range(from_index, to_index + 1):
                 self._config.del_day_item(sorted_times[i])
@@ -133,7 +133,7 @@ class MainListCtrl(wx.ListCtrl,
             from_time_new = to_time + to_len - from_len
             self._config.write_day_item(from_time_new, day_items[from_time])
 
-        else: # nach vorne schieben
+        else:  # push forward
             for i in range(to_index, from_index + 1):
                 self._config.del_day_item(sorted_times[i])
 
@@ -147,11 +147,11 @@ class MainListCtrl(wx.ListCtrl,
 
         self._config.Flush()
 
-        # Liste neu anzeigen
+        # show list again
         self.show_cur_day(select={from_time_new})
 
     def change_timespan(self, row, new_timespan):
-        if row + 1 >= self.GetItemCount(): # muss noch Zeile nach 'row' geben
+        if row + 1 >= self.GetItemCount():  # give it a row behind?
             return
 
         start_time    = Daytime(self.GetItemData(row))
@@ -161,19 +161,19 @@ class MainListCtrl(wx.ListCtrl,
         day_items     = self._config.read_day_items()
         sorted_times  = sorted(day_items.keys())
 
-        # betroffene Elemente löschen
+        # remove affected items
         for t in sorted_times:
             if t > start_time:
                 self._config.del_day_item(t)
 
-        # betroffene Elemente ändern
+        # change affected items
         for t in sorted_times:
             if t > start_time:
                 self._config.write_day_item(t + time_diff, day_items[t])
 
         self._config.Flush()
 
-        # Liste neu anzeigen
+        # show list again
         self.show_cur_day(select={start_time})
 
     def OnChar(self, event):
