@@ -1,5 +1,6 @@
 import datetime
 from pathlib import Path
+from typing import Callable
 
 import wx
 
@@ -28,7 +29,7 @@ class MyFrame(wx.Frame):
 
         self._create_toolbar()
         self._list_ctrl = MainListCtrl(
-            self, -1,
+            self,
             config=self._config,
             style=wx.LC_REPORT | wx.BORDER_NONE)# | wx.LC_SORT_ASCENDING)
         self._list_ctrl.show_cur_day()
@@ -43,7 +44,7 @@ class MyFrame(wx.Frame):
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self.on_begin_drag)
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
 
-    def _create_toolbar(self):
+    def _create_toolbar(self) -> None:
         toolbar = wx.Frame.CreateToolBar(self)
         self._add_tool_item(toolbar, "daylist", self.on_day_list, tooltip="Liste aller Tage")
         self._add_tool_item(toolbar, "prevday", self.on_prev_day, tooltip="vorheriger Tag")
@@ -55,13 +56,13 @@ class MyFrame(wx.Frame):
         self._add_tool_item(toolbar, "import", self.on_import, tooltip="Import aller Daten")
         toolbar.Realize()
 
-    def _add_tool_item(self, toolbar, bmp_name, handler, tooltip=""):
+    def _add_tool_item(self, toolbar: wx.ToolBar, bmp_name: str, handler: Callable[[wx.Event], None], tooltip=""):
         bmp = wx.Bitmap(str(self._etc_dpath / bmp_name) + ".bmp", wx.BITMAP_TYPE_BMP)
         label = ""
         new_tool = toolbar.AddTool(wx.ID_ANY, label, bmp, tooltip)
         self.Bind(wx.EVT_TOOL, handler, id = new_tool.GetId())
 
-    def _set_title(self):
+    def _set_title(self) -> None:
         today   = datetime.date.today()
         cur_day = self._config.get_day()
         if cur_day == today:
@@ -75,7 +76,7 @@ class MyFrame(wx.Frame):
         title = self._app_name + " - " + datestr
         wx.Frame.SetTitle(self, title)
 
-    def on_day_list(self, event):
+    def on_day_list(self, event: wx.Event) -> None:
         str2date     = {}
         datestr_list = []
         for day in reversed(self._config.read_days()):
@@ -97,7 +98,7 @@ class MyFrame(wx.Frame):
 
         dlg.Destroy()
 
-    def on_prev_day(self, event):
+    def on_prev_day(self, event: wx.Event) -> None:
         if self._list_ctrl.editor.IsShown():
             self._list_ctrl.CloseEditor()
         cur_day = self._config.get_day()
@@ -106,7 +107,7 @@ class MyFrame(wx.Frame):
         self._set_title()
         self._list_ctrl.show_cur_day()
 
-    def on_next_day(self, event):
+    def on_next_day(self, event: wx.Event) -> None:
         if self._list_ctrl.editor.IsShown():
             self._list_ctrl.CloseEditor()
         cur_day = self._config.get_day()
@@ -115,7 +116,7 @@ class MyFrame(wx.Frame):
         self._set_title()
         self._list_ctrl.show_cur_day()
 
-    def on_del_day(self, event):
+    def on_del_day(self, event: wx.Event) -> None:
         if self._list_ctrl.editor.IsShown():
             self._list_ctrl.CloseEditor()
         answer = wx.MessageBox(
@@ -127,7 +128,7 @@ class MyFrame(wx.Frame):
             self._config.DeleteGroup(self._config.get_day().strftime("/%y%m%d"))
             self._list_ctrl.show_cur_day()
 
-    def on_sum(self, event):
+    def on_sum(self, event: wx.Event) -> None:
         # time2psp
         time2psp = {}
         for t in self._config.read_day_times():
@@ -160,21 +161,21 @@ class MyFrame(wx.Frame):
         msg_title = self._app_name + ' - Sum(' + self._config.get_day().strftime("%d.%m.%y") + ')'
         wx.MessageBox(msg_text, msg_title)
 
-    def on_settings(self, event):
-        dlg = SettingsDlg(self, round_min=self._config.round_min)
+    def on_settings(self, event: wx.Event) -> None:
+        dlg = SettingsDlg(self, round_min=self._config._round_min)
 
         if dlg.ShowModal() == wx.ID_OK:
             # round_min
             round_str = dlg._round_ctrl.GetValue()
             if round_str and round_str.isdigit():
-                self._config.round_min = int(round_str)
+                self._config._round_min = int(round_str)
 
             self._config.write_settings()
             self._config.Flush()
 
         dlg.Destroy()
 
-    def on_export(self, event):
+    def on_export(self, event: wx.Event) -> None:
         # filename
         filename = wx.FileSelector(
             "Exportfile wählen",
@@ -196,7 +197,7 @@ class MyFrame(wx.Frame):
         # write
         open(filename, 'w').write('\n'.join(lines))
 
-    def on_import(self, event):
+    def on_import(self, event: wx.Event) -> None:
         # filename
         filename = wx.FileSelector(
             "Exportfile wählen",
@@ -267,7 +268,7 @@ class MyFrame(wx.Frame):
         self._set_title()
         self._list_ctrl.show_cur_day()
 
-    def on_end_edit(self, event):
+    def on_end_edit(self, event: wx.Event) -> None:
         self._ignore_next_end_edit_event = True
 
         row      = event.GetIndex()
@@ -279,7 +280,7 @@ class MyFrame(wx.Frame):
 
         event.Veto()
 
-    def on_right_click(self, event):
+    def on_right_click(self, event: wx.Event) -> None:
         # col
         x = event.GetPoint().x
         col = 0
@@ -345,7 +346,7 @@ class MyFrame(wx.Frame):
 
             self.PopupMenu(menu, event.GetPoint())
 
-    def on_change_item(self, event):
+    def on_change_item(self, event: wx.Event) -> None:
         # row, col
         if not isinstance(self.cur_listitem, wx.ListItem):
             return
@@ -365,7 +366,7 @@ class MyFrame(wx.Frame):
         # set new_text
         self._list_ctrl.change_text(row, col, new_text)
 
-    def on_del_item(self, event):
+    def on_del_item(self, event: wx.Event) -> None:
         # row, col
         if not isinstance(self.cur_listitem, wx.ListItem):
             return
@@ -373,7 +374,7 @@ class MyFrame(wx.Frame):
         self._list_ctrl.del_item(row)
         self.cur_listitem = None
 
-    def on_chg_timespan(self, event):
+    def on_chg_timespan(self, event: wx.Event) -> None:
         if not isinstance(self.cur_listitem, wx.ListItem):
             return
         row           = self.cur_listitem.GetId()
@@ -393,7 +394,7 @@ class MyFrame(wx.Frame):
         if new_time_span > 0 and new_time_span != old_time_span:
            self._list_ctrl.change_timespan(row, new_time_span)
 
-    def on_key_down(self, event):
+    def on_key_down(self, event: wx.Event) -> None:
         key_code = event.GetKeyCode()
 
         # num_items
@@ -430,7 +431,7 @@ class MyFrame(wx.Frame):
         else:
             event.Skip()
 
-    def on_begin_drag(self, event):
+    def on_begin_drag(self, event: wx.Event) -> None:
         row = event.GetIndex()
         if row < self._list_ctrl.GetItemCount()-2:
             drag_source = wx.DropSource(self)
@@ -439,12 +440,12 @@ class MyFrame(wx.Frame):
             drag_source.SetData(my_data)
             result = drag_source.DoDragDrop(True)
 
-    def on_size(self, event):
+    def on_size(self, event: wx.Event) -> None:
         s = self.GetClientSize()
         w, h = s.width, s.height
         self._list_ctrl.SetSize(w, h)
         #self.list.SetDimensions(0, 0, w, h)
 
-    def on_activate(self, event):
+    def on_activate(self, event: wx.Event) -> None:
         if event.GetActive():
             self._list_ctrl.show_cur_day()

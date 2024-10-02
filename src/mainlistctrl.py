@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import wx
 from wx.lib.mixins import listctrl as listmix
 
@@ -12,9 +14,9 @@ class MainListCtrl(wx.ListCtrl,
                    listmix.ListCtrlAutoWidthMixin,
                    listmix.TextEditMixin):
 
-    def __init__(self, parent, id, config: Config, pos=wx.DefaultPosition,
+    def __init__(self, parent: wx.Window, config: Config, pos=wx.DefaultPosition,
                  size=wx.DefaultSize, style=0):
-        wx.ListCtrl.__init__(self, parent, id, pos, size, style)
+        wx.ListCtrl.__init__(self, parent, -1, pos, size, style)
         self._config = config
 
         listmix.ListCtrlAutoWidthMixin.__init__(self)
@@ -23,7 +25,7 @@ class MainListCtrl(wx.ListCtrl,
         drop_target = ListDropTarget(self)
         self.SetDropTarget(drop_target)
 
-    def _populate(self):
+    def _populate(self) -> None:
         # for normal, simple columns, you can add them like this:
         self.InsertColumn(0, "Zeit", format=wx.LIST_FORMAT_RIGHT)
         self.InsertColumn(1, "Aufgabe")
@@ -33,9 +35,7 @@ class MainListCtrl(wx.ListCtrl,
         self.SetColumnWidth(1, 100)
         self.SetColumnWidth(2, 50)
 
-    def show_cur_day(self, select=None):
-        if select is None:
-            select = set()
+    def show_cur_day(self, select: Iterable[Daytime]=()) -> None:
         self.DeleteAllItems()
         for daytime in self._config.read_day_times():
             val = self._config.read_timeval(daytime)
@@ -53,14 +53,14 @@ class MainListCtrl(wx.ListCtrl,
             if self.GetItemData(row) in select:
                 self.SetItemState(row, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
 
-    def del_item(self, row):
+    def del_item(self, row: int) -> None:
         item_time = Daytime.create_from_str(self.GetItemText(row))
         if item_time:
             self._config.del_day_item(item_time)
             self._config.Flush()
             self.DeleteItem(row)
 
-    def change_text(self, row, col, new_text):
+    def change_text(self, row: int, col: int, new_text: str) -> None:
         old_text = self.GetItem(row, col).GetText()
         sel_times = []
         changed = False
@@ -100,7 +100,7 @@ class MainListCtrl(wx.ListCtrl,
             self._config.Flush()
             self.show_cur_day(sel_times)
 
-    def move_item(self, from_row, to_row):
+    def move_item(self, from_row: int, to_row: int) -> None:
         from_time     = Daytime(self.GetItemData(from_row))
         to_time       = Daytime(self.GetItemData(to_row))
         day_items     = self._config.read_day_items()
@@ -150,7 +150,7 @@ class MainListCtrl(wx.ListCtrl,
         # show list again
         self.show_cur_day(select={from_time_new})
 
-    def change_timespan(self, row, new_timespan):
+    def change_timespan(self, row: int, new_timespan: int) -> None:
         if row + 1 >= self.GetItemCount():  # give it a row behind?
             return
 
@@ -176,7 +176,7 @@ class MainListCtrl(wx.ListCtrl,
         # show list again
         self.show_cur_day(select={start_time})
 
-    def OnChar(self, event):
+    def OnChar(self, event: wx.Event) -> None:
         """ Überschreibt listmix.TextEditMixin.OnChar """
 
         keycode = event.GetKeyCode()
@@ -214,7 +214,7 @@ class MainListCtrl(wx.ListCtrl,
 
 class ListDropTarget(wx.DropTarget):
 
-    def __init__(self, list_ctrl):
+    def __init__(self, list_ctrl: wx.ListCtrl):
         wx.DropTarget.__init__(self)
         self.list_ctrl = list_ctrl
 

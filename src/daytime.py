@@ -30,14 +30,14 @@ class Daytime(int):
     def get_minutes(self):
         return int(self)
 
-    def __add__(self, other):
+    def __add__(self, other: Daytime) -> Daytime:
         return Daytime(int(self) + int(other))
 
-    def __sub__(self, other):
+    def __sub__(self, other: Daytime) -> Daytime:
         return Daytime(int(self) - int(other))
 
-    def __mul__(self, other):
+    def __mul__(self, other: int) -> Daytime:
         return Daytime(int(self) * int(other))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "%02i:%02i" % (self / 60, self % 60)

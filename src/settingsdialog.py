@@ -3,7 +3,7 @@ import wx
 
 class SettingsDlg(wx.Dialog):
 
-    def __init__(self, parent, round_min: int):
+    def __init__(self, parent: wx.Window, round_min: int):
         title = 'Einstellungen'
         wx.Dialog.__init__(self, parent, -1, title)
 
